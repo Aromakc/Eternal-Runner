@@ -1,82 +1,108 @@
-#include <GLAD/glad.h>
-#include <GLFW/glfw3.h>
-#include <iostream>
-#include "shaderClass.h"
+//------- Ignore this ----------
+//#include<filesystem>
+//namespace fs = filesystem;
+//------------------------------
 
-int main() {
+#include<iostream>
+#include<glad/glad.h>
+#include<GLFW/glfw3.h>
+#include<stb/stb_image.h>
+
+#include"texture.h"
+#include"shader.h"
+#include"VAO.h"
+#include"VBO.h"
+#include"EBO.h"
+
+
+float vertices[] =
+{ 
+	-0.5f, -0.5f, 0.0f,     1.0f, 0.0f, 0.0f,	0.0f, 0.0f, // Lower left corner
+	-0.5f,  0.5f, 0.0f,     0.0f, 1.0f, 0.0f,	0.0f, 1.0f, // Upper left corner
+	 0.5f,  0.5f, 0.0f,     0.0f, 0.0f, 1.0f,	1.0f, 1.0f, // Upper right corner
+	 0.5f, -0.5f, 0.0f,     1.0f, 1.0f, 1.0f,	1.0f, 0.0f  // Lower right corner
+};
+
+unsigned int indices[] =
+{
+	0, 2, 1, // Upper triangle
+	0, 3, 2 // Lower triangle
+};
+
+
+
+int main()
+{
 	glfwInit();
 
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	GLFWwindow* window = glfwCreateWindow(800, 800, "Aromac", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(800, 800, "Aromakc", NULL, NULL);
 
-	if (window == NULL) {
-		std::cout << "Failed to create window" << std::endl;
+	if (window == NULL)
+	{
+		std::cout << "Failed to create GLFW window" << std::endl;
 		glfwTerminate();
 		return -1;
 	}
 
 	glfwMakeContextCurrent(window);
-
 	gladLoadGL();
-
 	glViewport(0, 0, 800, 800);
 
-	//Normalized coordinates for  for Nepal Flag
-	float positions[] = {
+	Shader shaderProgram("../resources/Shader/vertexShader.vs", "../resources/Shader/fragmentShader.vs");
 
-		// Triangle1-Outer  (vertex + color)
-		-1.0f,  -1.0f,  0.5f,	0.0f, 0.21f, 0.58f,		//bottom left
-		 0.68f, -1.0f,  0.5f,	0.0f, 0.21f, 0.58f,		//bottom right
-		-1.0f,   0.7f,  0.5f,	0.0f, 0.21f, 0.58f,		//mid-top left
-								
-		-1.0f,   0.0,   0.5f,	0.0f, 0.21f, 0.58f,		//mid left
-		 0.72f,  0.0f,  0.5f,	0.0f, 0.21f, 0.58f,		//mid right 
-		-1.0f,   1.0f,  0.5f,	0.0f, 0.21f, 0.58f,		//top left
+	VAO VAO1;
+	VAO1.Bind();
 
-		// Triangle2-Inner	
-		-0.95f,	-0.95f,	0.5f,	0.87f, 0.04f, 0.2f,		//bottom left
-		 0.55f, -0.95f,	0.5f,	0.87f, 0.04f, 0.2f,		//bottom right
-		-0.95f,	 0.6f,	0.5f,	0.87f, 0.04f, 0.2f,		//mid top left
-							
-		-0.95f,	 0.05f,  0.5f,	0.87f, 0.04f, 0.2f,		//mid left
-		 0.52f,  0.05f,  0.5f,	0.87f, 0.04f, 0.2f,		//mid right 
-		-0.95f,  0.9f,  0.5f,	0.87f, 0.04f, 0.2f,		//top left
-	};
-	
-	unsigned int VAO, VBO;
+	VBO VBO1(vertices, sizeof(vertices));
+	EBO EBO1(indices, sizeof(indices));
 
-	glGenVertexArrays(1, &VAO);
-	glBindVertexArray(VAO);
+	VAO1.LinkAttrib(VBO1, 0, 3, GL_FLOAT, 8 * sizeof(float), (void*)0);
+	VAO1.LinkAttrib(VBO1, 1, 3, GL_FLOAT, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+	VAO1.LinkAttrib(VBO1, 2, 2, GL_FLOAT, 8 * sizeof(float), (void*)(6 * sizeof(float)));
 
-	glGenBuffers(1, &VBO); //1 buffer	
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	VAO1.Unbind();
+	VBO1.Unbind();
+	EBO1.Unbind();
 
-	glBufferData(GL_ARRAY_BUFFER, sizeof(positions), positions, GL_STATIC_DRAW);
+	unsigned int uniID = glGetUniformLocation(shaderProgram.ID, "scale");
 
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0); 
-	glEnableVertexAttribArray(0);
+	/*std::string parentDir = (fs::current_path().fs::path::parent_path()).string();
+	std::string texPath = "../resources/Textures/";
 
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
+	 Texture
+	Texture popCat((parentDir + texPath + "pop_cat.png").c_str(), GL_TEXTURE_2D, GL_TEXTURE0, GL_RGBA, GL_UNSIGNED_BYTE);
+	popCat.texUnit(shaderProgram, "tex0", 0);*/
 
-	Shader shaderProgram("resources/Shader/vertexShader.vs", "resources/Shader/fragmentShader.fs");
+	// Original code from the tutorial
+	Texture popCat("../resources/Textures/pop_cat.png", GL_TEXTURE_2D, GL_TEXTURE0, GL_RGBA, GL_UNSIGNED_BYTE);
+	popCat.texUnit(shaderProgram, "tex0", 0);
 
-	while (!glfwWindowShouldClose(window)) {
-
-		glClear(GL_COLOR_BUFFER_BIT); //clear back buffer and assign new color
+	while (!glfwWindowShouldClose(window))
+	{
+		glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
 		
 		shaderProgram.use();
+		glUniform1f(uniID, 0.5f);
+		// Binds texture so that is appears in rendeng
+		popCat.Bind();
+		VAO1.Bind();
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 		
-		glDrawArrays(GL_TRIANGLES, 0, 12);
-		
-		glfwSwapBuffers(window); //swap back buffer with front buffer
-		glfwPollEvents(); //window responding: appering resizing
+		glfwSwapBuffers(window);
+		glfwPollEvents();
 	}
 
+	VAO1.Delete();
+	VBO1.Delete();
+	EBO1.Delete();
+	popCat.Delete();
 	shaderProgram.~Shader();
+
 	glfwDestroyWindow(window);
 	glfwTerminate();
 	return 0;

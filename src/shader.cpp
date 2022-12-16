@@ -1,4 +1,4 @@
-#include"shaderClass.h"
+#include"shader.h"
 #include <malloc.h>
 
 Shader::Shader(const char* vertexPath, const char* fragmentPath)

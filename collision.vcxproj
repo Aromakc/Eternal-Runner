@@ -149,16 +149,26 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\shaderClass.cpp" />
+    <ClCompile Include="src\EBO.cpp" />
+    <ClCompile Include="src\shader.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\glad.c" />
+    <ClCompile Include="src\stb.cpp" />
+    <ClCompile Include="src\texture.cpp" />
+    <ClCompile Include="src\VAO.cpp" />
+    <ClCompile Include="src\VBO.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\GLAD\glad.h" />
     <ClInclude Include="include\GLFW\glfw3.h" />
     <ClInclude Include="include\GLFW\glfw3native.h" />
     <ClInclude Include="include\KHR\khrplatform.h" />
-    <ClInclude Include="src\shaderClass.h" />
+    <ClInclude Include="include\STB\stb_image.h" />
+    <ClInclude Include="src\EBO.h" />
+    <ClInclude Include="src\shader.h" />
+    <ClInclude Include="src\texture.h" />
+    <ClInclude Include="src\VAO.h" />
+    <ClInclude Include="src\VBO.h" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="lib\glfw3.lib" />
@@ -166,6 +176,9 @@
   <ItemGroup>
     <None Include="resources\Shader\fragmentShader.fs" />
     <None Include="resources\Shader\vertexShader.vs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="resources\Textures\pop_cat.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
