@@ -11,9 +11,9 @@ float NormalizeCoordinate(float input, float min, float max)
 	//normalize the coordiante of the viewport between 0 and 1
 	return (input - min) / (max - min); 
 }
-void setPixel(float posX, float posY, float k)
+void setPixel(float posX, float posY)
 {
-	float vertices[] = { NormalizeCoordinate(posX, 0, 800), NormalizeCoordinate(posY, 0, 800), 0.0f, k * 0.1, 0, 0 };
+	float vertices[] = { NormalizeCoordinate(posX, 0, 800), NormalizeCoordinate(posY, 0, 800), 0.0f, 0, 0, 1 };
 
 	VAO VAO1;
 	VAO1.Bind();
@@ -34,95 +34,95 @@ void setPixel(float posX, float posY, float k)
 	VBO1.Delete();	
 }
 
-// Algorithm of Digital Differential Line Drawing 
-void DDA_LDA(float xi, float yi, float xj, float yj)
+void Midpoint_CDA(float r)
 {
-	float dy, dx, steps, x, y, k;
-	float Xinc, Yinc;
-	dx = xj - xi;
-	dy = yj - yi;
-	if (abs(dy) > abs(dx))
-		steps = abs(dy);
-	else
-		steps = abs(dy);
-	Xinc = dx / steps;
-	Yinc = dy / steps;
-	x = xi;
-	y = yi;
-	setPixel(x, y,0);
-	for (k = 1; k <= steps; k++)
+	float x = 0;
+	float y = r;
+	float p = 1 - r; // p parameter is integer
+	while (y > x)
 	{
-		x += Xinc;
-		y += Yinc;
-		setPixel(round(x), round(y),0);
+		x++;
+		if (p < 0)
+		{
+			p += (2 * x + 1);
+		}
+		else
+		{
+			y--;
+			p += (2 * (x - y) + 1);
+		}
+		// ploting 8-octants 
+		setPixel(x, y); // start from mid-top
+		setPixel(-x, y);
+		setPixel(x, -y);
+		setPixel(-x, -y);
+		setPixel(y, x);
+		setPixel(-y, x);
+		setPixel(y, -x);
+		setPixel(-y, -x);
 	}
 }
 
-// Algorithm of Bresenham Line Drawing
-void Bresenham_LDA(float xi, float yi, float xj, float yj)
+void Midpoint_EDA(int xCenter, int yCenter, int rx, int ry)
 {
-	float dy, dx, x,y;
-	dx = xj - xi;
-	dy = yj - yi;
-
-
-	if (abs(dy) < abs(dx)) // |m| < 1.0
+	float x = 0;
+	float y = ry;//(0,ry) ---
+	float p1 = ry * ry - (rx * rx) * ry + (rx * rx) * (0.25);
+	//slope
+	float dx = 2 * (ry * ry) * x;
+	float dy = 2 * (rx * rx) * y;
+	while (dx < dy)
 	{
-		float p = 2 * dy - dx;
-
-		//Determine which endpoint to start as start position
-		if (xi > xj) {
-			x = xj;
-			y = yj;
-			xj = xi;
+		//plot (x,y)
+		setPixel(xCenter + x, yCenter + y);
+		setPixel(xCenter - x, yCenter + y);
+		setPixel(xCenter + x, yCenter - y);
+		setPixel(xCenter - x, yCenter - y);
+		if (p1 < 0)
+		{
+			x = x + 1;
+			dx = 2 * (ry * ry) * x;
+			p1 = p1 + dx + (ry * ry);
 		}
-		else {
-			x = xi;
-			y = yi;
-		}
-		setPixel(x, y, 0);
-		while (x < xj) {
-			x++;
-			if (p < 0) {
-				p += (2 * dy);
-			}
-			else {
-				y++;
-				p += (2 * (dy - dx));
-			}
-			setPixel(x, y, 0);
+		else
+		{
+			x = x + 1;
+			y = y - 1;
+			dx = 2 * (ry * ry) * x;
+			dy = 2 * (rx * rx) * y;
+			p1 = p1 + dx - dy + (ry * ry);
 		}
 	}
-	else // |m| > 1.0
+	//ploting for 2nd region of 1st quardant and the slope will be > -1
+	//----------------------Region-2------------------------//
+	float p2 = (ry * ry) * (x + 0.5) * (x + 0.5) + (rx * rx) * (y - 1) * (y - 1) - (rx *
+		rx) * (ry * ry);
+	while (y > 0)
 	{
-		float p = 2 * dx - dy;
-
-		//Determine which endpoint to start as start position
-		if (yi > yj) {
-			x = xj;
-			y = yj;
-			yj = yi;
+		//plot (x,y)
+		setPixel(xCenter + x, yCenter + y);
+		setPixel(xCenter - x, yCenter + y);
+		setPixel(xCenter + x, yCenter - y);
+		setPixel(xCenter - x, yCenter - y); //glEnd();
+		if (p2 > 0)
+		{
+			x = x;
+			y = y - 1;
+			dy = 2 * (rx * rx) * y;
+			//dy = 2 * rx * rx *y;
+			p2 = p2 - dy + (rx * rx);
 		}
-		else {
-			x = xi;
-			y = yi;
-		}
-		setPixel(x, y, 0);
-		while (y < yj) {
-			y++;
-			if (p < 0) {
-				p += (2 * dx);
-			}
-			else {
-				x++;
-				p += (2 * (dx - dy));
-			}
-			setPixel(x, y, 0);
+		else
+		{
+			x = x + 1;
+			y = y - 1;
+			dy = dy - 2 * (rx * rx);
+			dx = dx + 2 * (ry * ry);
+			p2 = p2 + dx -
+				dy + (rx * rx);
 		}
 	}
 }
-
-
 int main()
 {
 	glfwInit();
@@ -146,11 +146,9 @@ int main()
 
 	Shader shaderProgram("resources/Shader/vertexShader.vs", "resources/Shader/fragmentShader.fs");
 
-	float xi, xj, yi, yj;
-	std::cout << "Enter starting coordinate xi yi : ";
-	std::cin >> xi >> yi;
-	std::cout << "Enter ending coordinate xj yj : ";
-	std::cin >> xj >> yj;
+	float rx,ry;
+	std::cout << "Enter radiusX and radiusY the circle - r : ";
+	std::cin >> rx >> ry;
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -158,10 +156,22 @@ int main()
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		shaderProgram.use();
-
-		//DDA_LDA(xi, yi, xj, yj);
-		Bresenham_LDA(xi, yi, xj, yj); //function to draw line
 		
+		// left mouse button increases radius
+		if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) 
+			rx += 1;														   
+		// right mouse button decreases radius
+		if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
+			ry += 1;
+		// left mouse button increases radius
+		if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_4) == GLFW_PRESS)
+			rx -= 1;
+		// right mouse button decreases radius
+		if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_5) == GLFW_PRESS)
+			ry -= 1;
+
+		Midpoint_EDA(0,0,rx,ry);
+
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
