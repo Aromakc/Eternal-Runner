@@ -8,7 +8,7 @@
 
 float NormalizeCoordinate(float input, float min, float max)
 {
-	//normalize the coordiante of the viewport between 0 and 1
+	//normalize the coordiant of the viewport between 0 and 1
 	return (input - min) / (max - min); 
 }
 void setPixel(float posX, float posY)
@@ -63,63 +63,60 @@ void Midpoint_CDA(float r)
 	}
 }
 
-void Midpoint_EDA(int xCenter, int yCenter, int rx, int ry)
+void Midpoint_EDA(int rx, int ry)
 {
+	//starting point : mid-top
 	float x = 0;
-	float y = ry;//(0,ry) ---
-	float p1 = ry * ry - (rx * rx) * ry + (rx * rx) * (0.25);
-	//slope
+	float y = ry; 
+
 	float dx = 2 * (ry * ry) * x;
 	float dy = 2 * (rx * rx) * y;
+
+	// Region-1 1st Quadrant
+	double p1 = ry * ry - rx * rx * ry + rx * rx * (0.25);
 	while (dx < dy)
 	{
 		//plot (x,y)
-		setPixel(xCenter + x, yCenter + y);
-		setPixel(xCenter - x, yCenter + y);
-		setPixel(xCenter + x, yCenter - y);
-		setPixel(xCenter - x, yCenter - y);
+		setPixel(x, y);
+		setPixel(-x, y);
+		setPixel(x, -y);
+		setPixel(-x, -y);
+		x += 1;
 		if (p1 < 0)
 		{
-			x = x + 1;
-			dx = 2 * (ry * ry) * x;
-			p1 = p1 + dx + (ry * ry);
+			dx = 2 * ry * ry * x;
+			p1 = p1 + dx + ry * ry;
 		}
 		else
 		{
-			x = x + 1;
 			y = y - 1;
 			dx = 2 * (ry * ry) * x;
 			dy = 2 * (rx * rx) * y;
-			p1 = p1 + dx - dy + (ry * ry);
+			p1 = p1 + dx - dy + ry * ry;
 		}
 	}
-	//ploting for 2nd region of 1st quardant and the slope will be > -1
-	//----------------------Region-2------------------------//
-	float p2 = (ry * ry) * (x + 0.5) * (x + 0.5) + (rx * rx) * (y - 1) * (y - 1) - (rx *
-		rx) * (ry * ry);
+	// Region-2 2nd Quadrant
+	double p2 = (ry * ry) * (x + 0.5) * (x + 0.5) + (rx * rx) * (y - 1) * (y - 1) - (rx * rx) * (ry * ry);
 	while (y > 0)
 	{
 		//plot (x,y)
-		setPixel(xCenter + x, yCenter + y);
-		setPixel(xCenter - x, yCenter + y);
-		setPixel(xCenter + x, yCenter - y);
-		setPixel(xCenter - x, yCenter - y); //glEnd();
+		setPixel(x, y);
+		setPixel(-x, y);
+		setPixel(x, -y);
+		setPixel(-x, -y); 
+		y = y - 1;
 		if (p2 > 0)
 		{
 			x = x;
-			y = y - 1;
 			dy = 2 * (rx * rx) * y;
-			//dy = 2 * rx * rx *y;
 			p2 = p2 - dy + (rx * rx);
 		}
 		else
 		{
 			x = x + 1;
-			y = y - 1;
-			dy = dy - 2 * (rx * rx);
-			dx = dx + 2 * (ry * ry);
-			p2 = p2 + dx -
-				dy + (rx * rx);
+			dy = 2 * (rx * rx) * y;
+			dx = 2 * (ry * ry) * x;
+			p2 = p2 + dx - dy + (rx * rx);
 		}
 	}
 }
@@ -147,7 +144,7 @@ int main()
 	Shader shaderProgram("resources/Shader/vertexShader.vs", "resources/Shader/fragmentShader.fs");
 
 	float rx,ry;
-	std::cout << "Enter radiusX and radiusY the circle - r : ";
+	std::cout << "Enter radiusX and radiusY the circle - rx ry : ";
 	std::cin >> rx >> ry;
 
 	while (!glfwWindowShouldClose(window))
@@ -170,7 +167,7 @@ int main()
 		if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_5) == GLFW_PRESS)
 			ry -= 1;
 
-		Midpoint_EDA(0,0,rx,ry);
+		Midpoint_EDA(rx,ry);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
