@@ -11,149 +11,12 @@
 #include"VAO.h"
 #include"VBO.h"
 
+
 float normalizeCoordinate(float input, float min, float max)
 {
 	//normalizeCoordinate the coordiant of the viewport between 0 and 1
 	return (input - min) / (max - min); 
 }
-void setPixel(float posX, float posY)
-{
-	float vertices[] = { normalizeCoordinate(posX, 0, 800), normalizeCoordinate(posY, 0, 800), 0.0f, 0, 0, 1 };
-
-	VAO VAO1;
-	VAO1.Bind();
-
-	VBO VBO1(vertices, sizeof(vertices));
-	VAO1.LinkAttrib(VBO1, 0, 3, GL_FLOAT, 6 * sizeof(float), (void*)0);
-	VAO1.LinkAttrib(VBO1, 1, 3, GL_FLOAT, 6 * sizeof(float), (void*)(3 * sizeof(float)));
-	
-	VAO1.Unbind();
-	VBO1.Unbind();
-
-	VAO1.Bind();
-	glPointSize(5); //specify the diameter of rasterized points
-	glDrawArrays(GL_POINTS, 0, 1); // point as primitive, start, size
-
-	VAO1.Unbind();
-	VAO1.Delete();
-	VBO1.Delete();	
-}
-void Midpoint_CDA(float r)
-{
-	float x = 0;
-	float y = r;
-	float p = 1 - r; // p parameter is integer
-	while (y > x)
-	{
-		x++;
-		if (p < 0)
-		{
-			p += (2 * x + 1);
-		}
-		else
-		{
-			y--;
-			p += (2 * (x - y) + 1);
-		}
-		// ploting 8-octants 
-		setPixel(x, y); // start from mid-top
-		setPixel(-x, y);
-		setPixel(x, -y);
-		setPixel(-x, -y);
-		setPixel(y, x);
-		setPixel(-y, x);
-		setPixel(y, -x);
-		setPixel(-y, -x);
-	}
-}
-void displayRotation(Shader& shaderProgram, VAO& VAO1)
-{
-	glm::mat4 trans = glm::mat4(1.0f);
-	trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));
-	GLuint transformLoc = glGetUniformLocation(shaderProgram.ID, "transform");
-	glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
-
-	VAO1.Bind();
-	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-}
-void displayScale(Shader& shaderProgram, float scaleX, float scaleY, VAO& VAO1)
-{
-	glm::mat4 trans = glm::mat4(1.0f);
-	trans = glm::scale(trans, glm::vec3(scaleX, scaleY, 1));
-	GLuint transformLoc = glGetUniformLocation(shaderProgram.ID, "transform");
-	glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
-
-	VAO1.Bind();
-	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-}
-void displayTranslation(Shader& shaderProgram, float& x, float& y, float& speedX, float& speedY, float deltaTime)
-{
-	x += speedX * deltaTime;
-	y += speedY * deltaTime;
-	if (x + 25 > 200 || x - 25 < -200) speedX *= -1;
-	if (y + 25 > 200 || y - 25 < -200) speedY *= -1;
-
-	glm::mat4 trans = glm::mat4(1.0f);
-	trans = glm::translate(trans, glm::vec3(normalizeCoordinate(x, 0, 800), normalizeCoordinate(y, 0, 800), 0));
-	GLuint transformLoc = glGetUniformLocation(shaderProgram.ID, "transform");
-	glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
-
-	Midpoint_CDA(50);
-}
-void displayShear(Shader& shaderProgram, float x, VAO& VAO1)
-{
-	glm::mat4 trans = glm::mat4(
-		1.0f, 0.0f, 0.0f, 0.0f,
-		x, 1.0f, 0.0f, 0.0f,
-		0.0f, 0.0f, 1.0f, 0.0f,
-		0.0f, 0.0f, 0.0f, 1.0f
-	);
-	GLuint transformLoc = glGetUniformLocation(shaderProgram.ID, "transform");
-	glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
-
-	VAO1.Bind();
-	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-}
-void displayReflection(GLFWwindow* window, Shader& shaderProgram, VAO VAO1, float x, float y)
-{
-	glm::mat4 trans(1.0f);
-	glm::mat4 ReflectX(
-		1, 0, 0, 0,
-		0, -1, 0, 0,
-		0, 0, 1, 0,
-		0, 0, 0, 1
-	);
-
-	glm::mat4 ReflectY(
-		-1, 0, 0, 0,
-		0, 1, 0, 0,
-		0, 0, 1, 0,
-		0, 0, 0, 1
-	);
-
-	if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS)
-		trans = ReflectX * trans;
-	if (glfwGetKey(window, GLFW_KEY_Y) == GLFW_PRESS)
-		trans = ReflectY * trans;
-
-	trans = glm::translate(trans, glm::vec3(normalizeCoordinate(x, 0, 800), normalizeCoordinate(y, 0, 800), 0));
-	GLuint transformLoc = glGetUniformLocation(shaderProgram.ID, "transform");
-	glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
-	VAO1.Bind();
-	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-}
-void takeInput(GLFWwindow* window, float& x, float& y)
-{
-	if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
-		x += 1;
-	if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
-		x -= 1;
-	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
-		y += 1;
-	if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
-		y -= 1;
-}
-
 int main()
 {
 	glfwInit();
@@ -178,16 +41,22 @@ int main()
 	Shader shaderProgram("resources/Shader/vertexShader.vs", "resources/Shader/fragmentShader.fs");
 
 	float vertices[] = {
-		-0.25f, 0.0, 0.0f,	1,0,0,
-		0.25f, 0.0f, 0.0f,	1,0,0,
-	   -0.25f, 0.5f, 0.0f,	1,0,0,
-		0.25f, 0.5f, 0.0f,	1,0,0
+		-0.5f, 0.0f,  0.5f,     0.83f, 0.70f, 0.44f,
+		-0.5f, 0.0f, -0.5f,     0.73f, 0.70f, 0.54f,
+		 0.5f, 0.0f, -0.5f,     0.63f, 0.70f, 0.64f,
+		 0.5f, 0.0f,  0.5f,     0.53f, 0.70f, 0.74f,
+		 0.0f, 0.8f,  0.0f,     0.92f, 0.86f, 0.76f
 	};
 
 	unsigned int indices[] = {
 		0, 1, 2,
-		2, 1, 3
+		0, 2, 3,
+		0, 1, 4,
+		1, 2, 4,
+		2, 3, 4,
+		3, 0, 4
 	};
+
 	VAO VAO1;
 	VAO1.Bind(); 
 
@@ -200,49 +69,61 @@ int main()
 	VAO1.Unbind();
 	VBO1.Unbind();
 	EBO1.Unbind();
-	glm::mat4 reflectX(
-		1, 0, 0, 0,
-		0, -1, 0, 0,
-		0, 0, 1, 0,
-		0, 0, 0, 1
-	);
 
-	glm::mat4 reflectY(
-		-1, 0, 0, 0,
-		0, 1, 0, 0,
-		0, 0, 1, 0,
-		0, 0, 0, 1
-	);
+	// Variables that help the rotation of the pyramid
+	float rotation = 0.0f;
+	float scale = 0.9f;
+	double prevTime = glfwGetTime();
 
-
+	glEnable(GL_DEPTH_TEST);
+	
+	// Random Number Between 0 and 1
+	//srand(time(0));
 	while (!glfwWindowShouldClose(window))
 	{
 		glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		//initialize matrix to identity matrix first
-		glm::mat4 transform	(1.0f);
-		//transform = glm::translate(transform, glm::vec3(0.25f, 0.25f, 1.0f));
-		//transform = glm::rotate(transform, (float)glm::radians(45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-		transform = glm::scale(transform, glm::vec3(2.0f, 1.0f, 1.0f));
-		transform = transform * reflectX;
-		transform = glm::mat4(
-			1.0f, 0.0f, 0.0f, 0.0f,
-			0.2f, 1.0f, 0.0f, 0.0f,
-			0.0f, 0.0f, 1.0f, 0.0f,
-			0.0f, 0.0f, 0.0f, 1.0f
-		);
-
-
-		// get matrix's uniform location and set matrix
 		shaderProgram.use();
-		unsigned int transformLoc = glGetUniformLocation(shaderProgram.ID, "transform");
-		glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transform));
+		
+		//Simple timer
+		double currentTime = glfwGetTime();
+		if (currentTime - prevTime >= 1 / 60)
+		{
+			rotation += 0.5f;
+			prevTime = currentTime;
+		}
 
-		// render the new vertices
+		// Initializes matrices so they are not the null matrix
+		glm::mat4 model = glm::mat4(1.0f);
+		glm::mat4 view = glm::mat4(1.0f);
+		glm::mat4 proj = glm::mat4(1.0f);
+
+		// Assigns different transformations to each matrix
+		view = glm::translate(view, glm::vec3(0.0f, -0.5f, -2.0f));
+		view = glm::translate(view, glm::vec3(0.0f, 0.1f, 0.0f));
+		//proj = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 100.0f);
+		
+
+
+		//model = glm::translate(model, glm::vec3(0.5f, -0.5f, 0.0f));
+		model = glm::rotate(model, glm::radians(rotation), glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(scale));
+		 
+		
+		// Outputs the matrices into the Vertex Shader
+		int modelLoc = glGetUniformLocation(shaderProgram.ID, "model");
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+		int viewLoc = glGetUniformLocation(shaderProgram.ID, "view");
+		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+		int projLoc = glGetUniformLocation(shaderProgram.ID, "proj");
+		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(proj));
+
+		
+
 		VAO1.Bind();
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(unsigned int), GL_UNSIGNED_INT, 0);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
