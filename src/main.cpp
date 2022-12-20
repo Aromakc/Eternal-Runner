@@ -1,83 +1,247 @@
+#if defined(_MSC_VER) && (_MSC_VER >= 1310)
+#	pragma warning(disable: 4996) // Disable the fopen, strcpy, sprintf being unsafe warning
+#endif
+
+#include <iostream>
+#include <stdlib.h>
+ #include <stdio.h>
+#include <math.h>
 #include <GLAD/glad.h>
 #include <GLFW/glfw3.h>
-#include <iostream>
-#include "shaderClass.h"
 
-int main() {
+#define GLT_IMPLEMENTATION
+#include"gltext.h"
+
+#include <GLM/glm.hpp>
+#include <GLM/gtc/matrix_transform.hpp>
+#include <GLM/gtc/type_ptr.hpp>
+
+#include "ShaderClass.h"
+#include "VertexArrayObject.h"
+#include "VertexBufferObject.h"
+#include "ElementBufferObject.h"
+#include "TerrainGenerator.h"
+
+
+
+float width = 1080.0f, height = 800.0f;
+float Normalize(float input, float min, float max)
+{
+	return (input - min) / (max - min);
+}
+
+void framebuffer_size_callback(GLFWwindow* window, int width, int height)
+{
+	glViewport(0, 0, width, height);
+}
+
+void TakeInput(GLFWwindow* window, float& x, float& y)
+{
+	if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+		x += 1;
+	if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+		x -= 1;
+	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+		y += 1;
+	if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+		y -= 1;
+}
+
+
+void DisplayTextGameOver(int score) {
+	
+	char str[100];
+	GLTtext* text = gltCreateText();
+	//GLTtext* textReload = gltCreateText();
+	//gltSetText(textReload, "Press R to reload");
+
+	gltBeginDraw();
+	gltColor(1.0f,0.0f,0.0f,1.0f);
+	sprintf(str, "Game Over! %d \n\nPress R to reset", score);
+	gltSetText(text, str);
+	gltDrawText2DAligned(text, (GLfloat)(width/2), (GLfloat)(height/2), 3.0f, GLT_CENTER, GLT_CENTER);
+	
+	//gltDrawText2DAligned(textReload, (GLfloat)(width / 2 + 10.0f), (GLfloat)(height / 2 + 10.0f), 3.0f, GLT_CENTER, GLT_CENTER);
+
+	//gltDeleteText(text);
+	//gltDeleteText(textReload);
+}
+int main()
+{
+	//Initialized the window
 	glfwInit();
+	glfwInitHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwInitHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	glfwInitHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	//Get Screen Resolution
+	GLFWmonitor* primaryMonitor = glfwGetPrimaryMonitor();
+	const GLFWvidmode* screen = glfwGetVideoMode(primaryMonitor);
+	std::cout << screen->width << ", " << screen->height << std::endl;
 
-	GLFWwindow* window = glfwCreateWindow(800, 800, "Aromac", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow((int)width, (int)height, "EndlessRunner", NULL, NULL);
 
-	if (window == NULL) {
-		std::cout << "Failed to create window" << std::endl;
+
+	if (window == NULL)
+	{
+		std::cout << "failed  to create window" << std::endl;
 		glfwTerminate();
 		return -1;
 	}
 
 	glfwMakeContextCurrent(window);
 
+	//Load GLAD so it configures OPENGL
 	gladLoadGL();
+	glViewport(0, 0, width, height);
 
-	glViewport(0, 0, 800, 800);
-
-	//Normalized coordinates for  for Nepal Flag
-	float positions[] = {
-
-		// Triangle1-Outer  (vertex + color)
-		-1.0f,  -1.0f,  0.5f,	0.0f, 0.21f, 0.58f,		//bottom left
-		 0.68f, -1.0f,  0.5f,	0.0f, 0.21f, 0.58f,		//bottom right
-		-1.0f,   0.7f,  0.5f,	0.0f, 0.21f, 0.58f,		//mid-top left
-								
-		-1.0f,   0.0,   0.5f,	0.0f, 0.21f, 0.58f,		//mid left
-		 0.72f,  0.0f,  0.5f,	0.0f, 0.21f, 0.58f,		//mid right 
-		-1.0f,   1.0f,  0.5f,	0.0f, 0.21f, 0.58f,		//top left
-
-		// Triangle2-Inner	
-		-0.95f,	-0.95f,	0.5f,	0.87f, 0.04f, 0.2f,		//bottom left
-		 0.55f, -0.95f,	0.5f,	0.87f, 0.04f, 0.2f,		//bottom right
-		-0.95f,	 0.6f,	0.5f,	0.87f, 0.04f, 0.2f,		//mid top left
-							
-		-0.95f,	 0.05f,  0.5f,	0.87f, 0.04f, 0.2f,		//mid left
-		 0.52f,  0.05f,  0.5f,	0.87f, 0.04f, 0.2f,		//mid right 
-		-0.95f,  0.9f,  0.5f,	0.87f, 0.04f, 0.2f,		//top left
+	//Triangle Vertices
+	GLfloat vertices[] = {
+		-1.0f, -1.0f, 0.0f, 0.51f, 0.02f,0.03f,
+		1.0f, -1.0f, 0.0f, 0.51f, 0.02f,0.03f,
+		-1.0f, 1.0f, 0.0f, 0.51f, 0.02f,0.03f,
+		1.0f, 1.0f, 0.0f, 0.51f, 0.02f,0.03f,
 	};
-	
-	unsigned int VAO, VBO;
 
-	glGenVertexArrays(1, &VAO);
-	glBindVertexArray(VAO);
+	GLuint indices[] = {
+		0, 1, 2,
+		2, 1, 3
+	};
 
-	glGenBuffers(1, &VBO); //1 buffer	
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
-	glBufferData(GL_ARRAY_BUFFER, sizeof(positions), positions, GL_STATIC_DRAW);
-
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0); 
-	glEnableVertexAttribArray(0);
-
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
 
 	Shader shaderProgram("resources/Shader/vertexShader.vs", "resources/Shader/fragmentShader.fs");
 
-	while (!glfwWindowShouldClose(window)) {
+	VertexArrayObject VAO1;
+	VAO1.Bind();
 
-		glClear(GL_COLOR_BUFFER_BIT); //clear back buffer and assign new color
-		
-		shaderProgram.use();
-		
-		glDrawArrays(GL_TRIANGLES, 0, 12);
-		
-		glfwSwapBuffers(window); //swap back buffer with front buffer
-		glfwPollEvents(); //window responding: appering resizing
+	VertexBufferObject VBO1(vertices, sizeof(vertices));
+	ElementBufferObject EBO1(indices, sizeof(indices));
+
+	VAO1.LinkAttirb(VBO1, 0, 3, GL_FLOAT, sizeof(GLfloat) * 6, (void*)0);
+	VAO1.LinkAttirb(VBO1, 1, 3, GL_FLOAT, sizeof(GLfloat) * 6, (void*)(3 * sizeof(GLfloat)));
+	VAO1.Unbind();
+	VBO1.Unbind();
+	EBO1.Unbind();
+
+
+	float lastTime = 0, currentTime, deltaTime;
+	float speedX = 0, speedY = 0;
+	float gravity = -0.9f;
+	float sizeX = 100.0f;
+	float sizeY = 100.0f;
+	float squareScaleX = sizeX / width;
+	float squareScaleY = sizeY / height;
+	float x = -width / 2 + sizeX;
+	float y = 0;
+	bool jumping = false;
+	double mouseX = 0, mouseY = 0;
+	int score = 0;
+	bool gameOver=false;
+	TerrainGenerator terrain((float)width, (float)height);
+	
+	// GLT initialistion for TEXT RENDERING
+	if (!gltInit())
+	{
+		fprintf(stderr, "Failed to initialize glText\n");
+		glfwTerminate();
+		return EXIT_FAILURE;
 	}
 
-	shaderProgram.~Shader();
+	char str[20];
+	GLTtext* text1 = gltCreateText();
+	double time = glfwGetTime();
+	
+	glEnable(GL_BLEND);
+	while (!glfwWindowShouldClose(window))
+	{
+		glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
+			
+		// GLT shader begin
+		gltBeginDraw();
+		gltColor(cosf((float)time) * 0.5f + 0.5f, sinf((float)time) * 0.5f + 0.5f, 1.0f, 1.0f);
+		sprintf(str, "Score %d", score);
+		gltSetText(text1, str);
+		gltDrawText2DAligned(text1, (GLfloat)width, 0, 2.0f, GLT_RIGHT, GLT_TOP);
+
+
+
+		currentTime = static_cast<float>(glfwGetTime());
+		deltaTime = currentTime - lastTime;
+		lastTime = currentTime;
+
+		shaderProgram.Activate();
+
+
+		TakeInput(window, x, y);
+		glfwGetCursorPos(window, &mouseX, &mouseY);
+
+		terrain.Generate(shaderProgram.ID, deltaTime, &score);
+		if (terrain.DetectCollision(x, y, sizeX, sizeY))
+		{
+			DisplayTextGameOver(score);
+			terrain.setSpeed(0.0f);
+			speedY = 0.0f;
+			gameOver = true;
+		}
+
+		y += speedY;
+		speedY += gravity;
+
+
+		if (y - sizeY / 2 < -height / 2)
+		{
+			y = -height / 2 + sizeY / 2;
+			speedY = 0;
+			jumping = false;
+		}
+
+		if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && !jumping)
+		{
+			speedY = 30.0f;
+			jumping = true;
+		}
+		if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS && gameOver)
+		{
+			speedY = 30.0f;
+			jumping = true;
+			terrain.ResetGame(score);
+			gameOver = false;
+		}
+
+		glm::mat4 model = glm::mat4(1.0f);
+		glm::mat4 projection = glm::mat4(1.0f);
+		glm::mat4 view = glm::mat4(1.0f);
+
+
+		model = glm::translate(model, glm::vec3(Normalize(x, 0, width / 2), Normalize(y, 0, height / 2), 0.0f));
+		model = glm::scale(model, glm::vec3(squareScaleX, squareScaleY, 1.0f));
+
+
+		glm::mat4 MVP = projection * view * model;
+
+		GLuint MVPLoc = glGetUniformLocation(shaderProgram.ID, "MVP");
+		glUniformMatrix4fv(MVPLoc, 1, GL_FALSE, glm::value_ptr(MVP));
+
+
+		VAO1.Bind();
+		glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(GLuint), GL_UNSIGNED_INT, 0);
+
+
+		//Take Care of all glfw Events
+		glfwSwapBuffers(window);
+		glfwPollEvents();
+	}
+
+	//Window Closing Events
+	VAO1.Delete();
+	VBO1.Delete();
+	EBO1.Delete();
+	shaderProgram.Delete();
+	gltDeleteText(text1);
+
 	glfwDestroyWindow(window);
 	glfwTerminate();
+
 	return 0;
 }
