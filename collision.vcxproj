@@ -164,13 +164,9 @@
     <ClInclude Include="include\GLFW\glfw3native.h" />
     <ClInclude Include="include\KHR\khrplatform.h" />
     <ClInclude Include="src\ElementBufferObject.h" />
-    <ClInclude Include="src\fontstash.h" />
-    <ClInclude Include="src\gl3corefontstash.h" />
-    <ClInclude Include="src\glfontstash.h" />
     <ClInclude Include="src\gltext.h" />
     <ClInclude Include="src\Obstacle.h" />
     <ClInclude Include="src\ShaderClass.h" />
-    <ClInclude Include="src\stb_truetype.h" />
     <ClInclude Include="src\TerrainGenerator.h" />
     <ClInclude Include="src\VertexArrayObject.h" />
     <ClInclude Include="src\VertexBufferObject.h" />
@@ -180,8 +176,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\Shader\fragmentShader.fs" />
-    <None Include="resources\Shader\text.vs" />
-    <None Include="resources\Shader\text.fs" />
     <None Include="resources\Shader\vertexShader.vs" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

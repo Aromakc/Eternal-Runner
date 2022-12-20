@@ -126,7 +126,7 @@ int main()
 
 	float lastTime = 0, currentTime, deltaTime;
 	float speedX = 0, speedY = 0;
-	float gravity = -0.9f;
+	float gravity = -0.85f;
 	float sizeX = 100.0f;
 	float sizeY = 100.0f;
 	float squareScaleX = sizeX / width;

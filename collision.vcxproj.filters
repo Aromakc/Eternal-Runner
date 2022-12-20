@@ -74,18 +74,6 @@
     <ClInclude Include="src\gltext.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\stb_truetype.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\glfontstash.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\gl3corefontstash.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\fontstash.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Library Include="lib\glfw3.lib" />
@@ -93,7 +81,5 @@
   <ItemGroup>
     <None Include="resources\Shader\vertexShader.vs" />
     <None Include="resources\Shader\fragmentShader.fs" />
-    <None Include="resources\Shader\text.vs" />
-    <None Include="resources\Shader\text.fs" />
   </ItemGroup>
 </Project>
